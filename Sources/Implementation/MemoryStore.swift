@@ -32,4 +32,9 @@ public class MemoryStore<T>: Storable {
         self.state = input
         self.postSet = didSet
     }
+    
+    public init(_ input: T, didSet: ((T) -> Void)? = nil) {
+        self.state = .loaded(input)
+        self.postSet = didSet
+    }
 }
