@@ -6,13 +6,7 @@ public class AsyncStore<T>: ReadStorable {
     
     public var state: StoreState<T> {
         willSet {
-            if Thread.isMainThread {
-                self.objectWillChange.send()
-            } else {
-                DispatchQueue.main.sync { [weak self] in
-                    self?.objectWillChange.send()
-                }
-            }
+            self.objectWillChange.send()
         } didSet {
             self._objectDidChange.send(state)
         }
@@ -33,9 +27,13 @@ public class AsyncStore<T>: ReadStorable {
         Task {
             do {
                 let value = try await closure()
-                self.state = .loaded(value)
+                await MainActor.run {
+                    self.state = .loaded(value)
+                }
             } catch {
-                self.state = .errored(error)
+                await MainActor.run {
+                    self.state = .errored(error)
+                }
             }
         }
     }
