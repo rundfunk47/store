@@ -16,21 +16,13 @@ public class KeyPathMappedStore<T, Base: Storable>: Storable {
             self.base.set(newBaseValue)
         }
     }
-    
+
     public var state: StoreState<T> {
-        get {
-            base.state[keyPath]
-        } set {
-            switch newValue {
-            case .initial:
-                self.base.state = .initial
-            case .loading:
-                self.base.state = .loading
-            case .loaded(let value):
-                self.set(value)
-            case .errored(let error):
-                self.base.state = .errored(error)
-            }
+        didSet {
+            self._objectDidChange.send(state)
+        }
+        willSet {
+            self.objectWillChange.send()
         }
     }
     
@@ -38,12 +30,13 @@ public class KeyPathMappedStore<T, Base: Storable>: Storable {
         base.fetch()
     }
     
+    private let _objectDidChange = PassthroughSubject<StoreState<T>, Never>()
+    
     public var objectDidChange: AnyPublisher<StoreState<T>, Never> {
-        base.objectDidChange.map { [weak self] state in
-            guard let self = self else { return .errored(DummyError()) }
-            return state[self.keyPath]
-        }.eraseToAnyPublisher()
+        _objectDidChange.eraseToAnyPublisher()
     }
+    
+    private var cancellable: AnyCancellable! = nil
     
     public var objectWillChange: ObservableObjectPublisher {
         base.objectWillChange as! ObservableObjectPublisher
@@ -52,9 +45,28 @@ public class KeyPathMappedStore<T, Base: Storable>: Storable {
     var base: Base
     var keyPath: WritableKeyPath<Base.T, T>
     
+    static func calculateState(state: StoreState<Base.T>, keyPath: WritableKeyPath<Base.T, T>) -> StoreState<T> {
+        switch state {
+        case .initial:
+            return .initial
+        case .loading:
+            return  .loading
+        case .loaded(let value):
+            let val = value[keyPath: keyPath]
+            return .loaded(val)
+        case .errored(let error):
+            return .errored(error)
+        }
+    }
+    
     init(_ base: Base, keyPath: WritableKeyPath<Base.T, T>) {
         self.base = base
         self.keyPath = keyPath
+        self.state = Self.calculateState(state: base.state, keyPath: keyPath)
+
+        self.cancellable = base.objectDidChange.sink(receiveValue: { [weak self] state in
+            self?.state = Self.calculateState(state: state, keyPath: keyPath)
+        })
     }
 }
 

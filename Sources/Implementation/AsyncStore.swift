@@ -42,7 +42,7 @@ public class AsyncStore<T>: ReadStorable {
         _objectDidChange.eraseToAnyPublisher()
     }
     
-    public var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
+    private var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
         
     public init(_ closure: @escaping () async throws -> T) {
         self.state = .initial

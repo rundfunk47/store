@@ -26,7 +26,7 @@ public class MemoryStore<T>: Storable {
     }
     
     private let postSet: ((T) -> Void)?
-    public var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
+    private var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
         
     public init(_ input: StoreState<T>, didSet: ((T) -> Void)? = nil) {
         self.state = input

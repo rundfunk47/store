@@ -11,4 +11,5 @@ public protocol ReadStorable: ObservableObject /*PresentationStateProviding, Fet
     func eraseToAnyReadStore() -> ReadStore<T>
     func publishedValue() -> AnyPublisher<T, Error>
     func value() async throws -> T
+    func forceNewValue() async throws -> T
 }

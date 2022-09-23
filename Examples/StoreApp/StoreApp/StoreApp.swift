@@ -26,7 +26,7 @@ class Stores {
         if id == 0 {
             return MockStore(.loaded("Hi!")).eraseToAnyReadStore()
         } else {
-            return MockStore(.loaded("Hello!")).eraseToAnyReadStore()
+            return MockStore(.loaded("Hello!"), firstError: true).eraseToAnyReadStore()
         }
     }
     

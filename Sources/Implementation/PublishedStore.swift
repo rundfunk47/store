@@ -24,7 +24,7 @@ public class PublishedStore<T>: Storable {
         _objectDidChange.eraseToAnyPublisher()
     }
     
-    public var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
+    private var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
         
     private var cancellable: AnyCancellable!
     private let signal: AnyPublisher<T, Never>

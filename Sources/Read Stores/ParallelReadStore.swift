@@ -1,10 +1,6 @@
 import Foundation
 import Combine
 
-fileprivate struct DummyError: Error {
-    
-}
-
 public class ParallelReadStore<A: ReadStorable, B: ReadStorable, Output>: ReadStorable {
     static func calculateState(
         aState: StoreState<A.T>,
@@ -37,7 +33,12 @@ public class ParallelReadStore<A: ReadStorable, B: ReadStorable, Output>: ReadSt
     }
     
     public var state: StoreState<Output> {
-        Self.calculateState(aState: a.state, bState: b.state, transform: transform)
+        willSet {
+            self.objectWillChange.send()
+        }
+        didSet {
+            self._objectDidChange.send(state)
+        }
     }
         
     public func fetch() {
@@ -45,34 +46,28 @@ public class ParallelReadStore<A: ReadStorable, B: ReadStorable, Output>: ReadSt
         b.fetch()
     }
     
-    public var objectDidChange: AnyPublisher<StoreState<Output>, Never>
+    public var objectDidChange: AnyPublisher<StoreState<Output>, Never> {
+        _objectDidChange.eraseToAnyPublisher()
+    }
+    
+    private var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
 
     var a: A
     var b: B
     var transform: (A.T, B.T) throws -> T
     
-    var aObjectWillChangeCancellable: AnyCancellable! = nil
-    var bObjectWillChangeCancellable: AnyCancellable! = nil
-    
-    func setupCancellables() {
-        aObjectWillChangeCancellable = a.objectWillChange.sink { [weak self] _ in
-            self?.objectWillChange.send()
-        }
-        
-        bObjectWillChangeCancellable = b.objectWillChange.sink { [weak self]  _ in
-            self?.objectWillChange.send()
-        }
-    }
-    
+    var didChangeCancellable: AnyCancellable! = nil
+
     public init(_ a: A, _ b: B, _ transform: @escaping (A.T, B.T) throws -> Output) {
         self.a = a
         self.b = b
         self.transform = transform
+        self.state = Self.calculateState(aState: a.state, bState: b.state, transform: transform)
         
-        self.objectDidChange = Publishers.CombineLatest(a.objectDidChange, b.objectDidChange).map { tuple in
+        didChangeCancellable = Publishers.CombineLatest(a.objectDidChange, b.objectDidChange).map { tuple in
             return Self.calculateState(aState: tuple.0, bState: tuple.1, transform: transform)
-        }.eraseToAnyPublisher()
-        
-        self.setupCancellables()
+        }.sink(receiveValue: { [weak self] newState in
+            self?.state = newState
+        })
     }
 }

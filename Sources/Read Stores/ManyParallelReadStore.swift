@@ -6,7 +6,7 @@ fileprivate struct DummyError: Error {
 }
 
 class ManyParallelReadStore<T, Base: ReadStorable>: ReadStorable {
-    private func calculateState(base: [StoreState<Base.T>]) -> StoreState<T> {
+    private static func calculateState(base: [StoreState<Base.T>], transform: @escaping ([Base.T]) throws -> T) -> StoreState<T> {
         var all: [Base.T] = []
         
         for state in base {
@@ -30,7 +30,11 @@ class ManyParallelReadStore<T, Base: ReadStorable>: ReadStorable {
     }
     
     var state: StoreState<T> {
-        calculateState(base: base.map { $0.state })
+        willSet {
+            self.objectWillChange.send()
+        } didSet {
+            self._objectDidChange.send(state)
+        }
     }
         
     func fetch() {
@@ -40,24 +44,24 @@ class ManyParallelReadStore<T, Base: ReadStorable>: ReadStorable {
     }
     
     var objectDidChange: AnyPublisher<StoreState<T>, Never> {
-        base.map { $0.objectDidChange }.combineLatest().map { [weak self] in
-            guard let self = self else { return .errored(DummyError()) }
-            return self.calculateState(base: $0)
-        }.eraseToAnyPublisher()
+        _objectDidChange.eraseToAnyPublisher()
     }
 
-    var base: [Base]
-    var transform: ([Base.T]) throws -> T
+    var _objectDidChange = PassthroughSubject<StoreState<T>, Never>()
     
-    var objectWillChangeCancellable: AnyCancellable! = nil
+    var base: [Base]
+    
+    var objectDidChangeCancellable: AnyCancellable! = nil
     
     init<Others: Collection>(_ base: Others, _ transform: @escaping ([Base.T]) throws -> T) where Others.Element == Base {
         self.base = base.map { $0 }
-        self.transform = transform
+        
+        state = Self.calculateState(base: base.map { $0.state }, transform: transform)
                 
-        objectWillChangeCancellable = Publishers.MergeMany(base.map { $0.objectWillChange }).sink(receiveValue: { [weak self] _ in
-            self?.objectWillChange.send()
-        })
+        objectDidChangeCancellable = base.map { $0.objectDidChange }.combineLatest().sink { [weak self] in
+            let a = Self.calculateState(base: $0, transform: transform)
+            self?.state = a
+        }
     }
 }
 

@@ -19,7 +19,7 @@ class MappedReadStore<T, Base: ReadStorable>: ReadStorable {
         base.fetch()
     }
     
-    public var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
+    private var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
 
     var objectDidChange: AnyPublisher<StoreState<T>, Never> {
         _objectDidChange.eraseToAnyPublisher()
@@ -30,30 +30,32 @@ class MappedReadStore<T, Base: ReadStorable>: ReadStorable {
     }
 
     var base: Base
-    var transform: (Base.T) throws -> T
     
     var cancellable: AnyCancellable!
     
+    static func calculateState(baseState: StoreState<Base.T>, transform: @escaping (Base.T) throws -> T) -> StoreState<T> {
+        switch baseState {
+        case .initial:
+            return .initial
+        case .loading:
+            return  .loading
+        case .loaded(let value):
+            do {
+                return .loaded(try transform(value))
+            } catch {
+                return .errored(error)
+            }
+        case .errored(let error):
+            return .errored(error)
+        }
+    }
+    
     init(_ base: Base, _ transform: @escaping (Base.T) throws -> T) {
         self.base = base
-        self.transform = transform
-        self.state = .initial
+        self.state = Self.calculateState(baseState: base.state, transform: transform)
         
         self.cancellable = base.objectDidChange.sink(receiveValue: { [weak self] baseState in
-            switch baseState {
-            case .initial:
-                self?.state = .initial
-            case .loading:
-                self?.state = .loading
-            case .loaded(let value):
-                do {
-                    self?.state = .loaded(try transform(value))
-                } catch {
-                    self?.state = .errored(error)
-                }
-            case .errored(let error):
-                self?.state = .errored(error)
-            }
+            self?.state = Self.calculateState(baseState: baseState, transform: transform)
         })
     }
 }

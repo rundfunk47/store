@@ -13,7 +13,7 @@ class ChainedReadStore<T, Base: ReadStorable>: ReadStorable {
         base.fetch()
     }
 
-    var _objectDidChange: PassthroughSubject<StoreState<T>, Never>
+    private var _objectDidChange: PassthroughSubject<StoreState<T>, Never>
     var objectWillChange: ObservableObjectPublisher
     var objectDidChange: AnyPublisher<StoreState<T>, Never> {
         _objectDidChange.eraseToAnyPublisher()

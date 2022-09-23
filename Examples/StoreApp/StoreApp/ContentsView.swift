@@ -34,21 +34,34 @@ struct ContentsView<ViewModel: ContentsViewModel>: View {
     @ObservedObject var viewModel: ViewModel
     
     var body: some View {
-        Self._printChanges()
-        
-        return Group {
-            switch viewModel.presentationState {
-            case .loaded:
-                ForEach(viewModel.contents, id: \.id) {
-                    Text($0.name)
+        NavigationView {
+            Group {
+                switch viewModel.presentationState {
+                case .loaded:
+                    List {
+                        ForEach(viewModel.contents, id: \.id) {
+                            Text($0.name)
+                        }
+                    }
+                case .loading:
+                    ProgressView()
+                case .errored(let error):
+                    VStack {
+                        Text(error.localizedDescription)
+                        Button("Retry") {
+                            viewModel.load()
+                        }
+                    }
                 }
-            case .loading:
-                ProgressView()
-            case .errored(let error):
-                Text(error.localizedDescription)
+            }.onAppear {
+                viewModel.load()
+            }.toolbar {
+                ToolbarItem {
+                    Button("Reload") {
+                        viewModel.reload()
+                    }
+                }
             }
-        }.onAppear {
-            viewModel.load()
         }
     }
 }

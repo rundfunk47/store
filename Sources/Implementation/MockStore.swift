@@ -1,6 +1,12 @@
 import Foundation
 import Combine
 
+struct MockError: LocalizedError {
+    var errorDescription: String? {
+        return "Mock error"
+    }
+}
+
 public class MockStore<T>: Storable {
     let input: StoreState<T>
     
@@ -21,7 +27,13 @@ public class MockStore<T>: Storable {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             guard let self = self else { return }
-            self.state = self.input
+            
+            if self.firstError == true {
+                self.state = .errored(MockError())
+                self.firstError = false
+            } else {
+                self.state = self.input
+            }
         }
     }
     
@@ -29,10 +41,13 @@ public class MockStore<T>: Storable {
         _objectDidChange.eraseToAnyPublisher()
     }
     
-    public var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
+    private var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
         
-    public init(_ input: StoreState<T>) {
+    private var firstError: Bool
+    
+    public init(_ input: StoreState<T>, firstError: Bool = false) {
         self.input = input
         self.state = .initial
+        self.firstError = firstError
     }
 }
