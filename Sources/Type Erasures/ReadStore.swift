@@ -94,17 +94,12 @@ fileprivate final class _AnyReadStoreBox<Base: ReadStorable>: _AnyReadStoreBase<
         )
     }
     
-    private static func subscribe<EnclosingType: ObservableObject>(
-        instance: EnclosingType,
-        storageKeyPath: AnyKeyPath
-    ) {
-        let key = "\(ObjectIdentifier(instance).hashValue)+\(storageKeyPath.hashValue)"
+    func subscribe(from instance: any ObservableObject) {
+        let key = "\(ObjectIdentifier(instance).hashValue)+\(ObjectIdentifier(self).hashValue)"
 
-        let store = instance[keyPath: storageKeyPath] as! ReadStore<T>
+        if self.cancellable[key] == nil {
+            self.cancellable[key] = self.objectWillChange.sink { [weak instance] in
 
-        if store.cancellable[key] == nil {
-            store.cancellable[key] = store.objectWillChange.sink { [weak instance] in
-                
                 if let instance = instance {
                     if Thread.isMainThread {
                         (instance.objectWillChange as! ObservableObjectPublisher).send()
@@ -114,19 +109,27 @@ fileprivate final class _AnyReadStoreBox<Base: ReadStorable>: _AnyReadStoreBase<
                         }
                     }
                 } else {
-                    store.cancellable[key] = nil
+                    self.cancellable[key] = nil
                 }
             }
         }
     }
     
+    private static func subscribe<EnclosingType: ObservableObject>(
+        instance: EnclosingType,
+        storageKeyPath: AnyKeyPath
+    ) {
+        let store = instance[keyPath: storageKeyPath] as! ReadStore<T>
+        store.subscribe(from: instance)
+    }
+
     public static subscript<EnclosingType: ObservableObject>(
         _enclosingInstance instance: EnclosingType,
         wrapped wrappedKeyPath: KeyPath<EnclosingType, T>,
         storage storageKeyPath: ReferenceWritableKeyPath<EnclosingType, ReadStore>
     ) -> T {
         Self.subscribe(instance: instance, storageKeyPath: storageKeyPath)
-        
+
         let store = instance[keyPath: storageKeyPath]
         return store.loadedValue!
     }

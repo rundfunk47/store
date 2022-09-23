@@ -14,15 +14,23 @@ struct StoreApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView(viewModel: ContentViewModel(stores: stores))
+            ContentsView(viewModel: ContentsViewModel(stores: stores))
         }
     }
 }
 
 class Stores {
-    var nameStore: ReadStore<String>
+    var namesStore: ReadStore<[Int]>
+    
+    func name(id: Int) -> ReadStore<String> {
+        if id == 0 {
+            return MockStore(.loaded("Hi!")).eraseToAnyReadStore()
+        } else {
+            return MockStore(.loaded("Hello!")).eraseToAnyReadStore()
+        }
+    }
     
     init() {
-        self.nameStore = MockStore(.loaded("Hi!")).eraseToAnyReadStore()
+        self.namesStore = MockStore(.loaded([0, 1])).eraseToAnyReadStore()
     }
 }

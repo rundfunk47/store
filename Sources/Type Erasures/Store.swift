@@ -116,17 +116,26 @@ fileprivate final class _AnyStoreBox<Base: Storable>: _AnyStoreBase<Base.T> {
         instance: EnclosingType,
         storageKeyPath: AnyKeyPath
     ) {
-        let key = "\(ObjectIdentifier(instance).hashValue)+\(storageKeyPath.hashValue)"
+        let store = instance[keyPath: storageKeyPath] as! ReadStore<T>
+        store.subscribe(from: instance)
+    }
+    
+    func subscribe(from instance: any ObservableObject) {
+        let key = "\(ObjectIdentifier(instance).hashValue)+\(ObjectIdentifier(self).hashValue)"
 
-        let store = instance[keyPath: storageKeyPath] as! Store<T>
+        if self.cancellable[key] == nil {
+            self.cancellable[key] = self.objectWillChange.sink { [weak instance] in
 
-        if store.cancellable[key] == nil {
-            store.cancellable[key] = store.objectWillChange.receive(on: DispatchQueue.main, options: nil).sink { [weak instance] in
-                
                 if let instance = instance {
-                    (instance.objectWillChange as! ObservableObjectPublisher).send()
+                    if Thread.isMainThread {
+                        (instance.objectWillChange as! ObservableObjectPublisher).send()
+                    } else {
+                        DispatchQueue.main.sync {
+                            (instance.objectWillChange as! ObservableObjectPublisher).send()
+                        }
+                    }
                 } else {
-                    store.cancellable[key] = nil
+                    self.cancellable[key] = nil
                 }
             }
         }
