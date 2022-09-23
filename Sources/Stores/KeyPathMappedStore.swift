@@ -1,10 +1,6 @@
 import Foundation
 import Combine
 
-fileprivate struct DummyError: Error {
-    
-}
-
 public class KeyPathMappedStore<T, Base: Storable>: Storable {
     public func set(_ value: T) {
         switch base.state {

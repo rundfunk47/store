@@ -1,10 +1,6 @@
 import Foundation
 import Combine
 
-fileprivate struct DummyError: Error {
-    
-}
-
 class ManyParallelReadStore<T, Base: ReadStorable>: ReadStorable {
     private static func calculateState(base: [StoreState<Base.T>], transform: @escaping ([Base.T]) throws -> T) -> StoreState<T> {
         var all: [Base.T] = []

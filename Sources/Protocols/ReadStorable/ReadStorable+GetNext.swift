@@ -1,10 +1,6 @@
 import Foundation
 import Combine
 
-fileprivate struct DummyError: Error {
-    
-}
-
 extension ReadStorable {
     func getNext()  -> AnyPublisher<T, Error> {
         return self
@@ -25,7 +21,6 @@ extension ReadStorable {
                     return self.getNext()
                 }
             })
-            .mapError {  _ in return DummyError() as Error }
             .eraseToAnyPublisher()
     }
 }
