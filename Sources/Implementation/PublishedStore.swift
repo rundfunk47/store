@@ -15,6 +15,8 @@ public class PublishedStore<T>: Storable {
     }
     
     public func fetch() {
+        guard cancellable == nil else { return }
+
         cancellable = signal.sink { newValue in
             self.state = .loaded(newValue)
         }
