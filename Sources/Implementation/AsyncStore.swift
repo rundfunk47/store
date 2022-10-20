@@ -6,7 +6,9 @@ public class AsyncStore<T>: ReadStorable {
     
     public var state: StoreState<T> {
         willSet {
-            self.objectWillChange.send()
+            Task { @MainActor in
+                self.objectWillChange.send()
+            }
         } didSet {
             self._objectDidChange.send(state)
         }
@@ -23,16 +25,12 @@ public class AsyncStore<T>: ReadStorable {
         // if initial or error:
         self.state = .loading
         
-        Task {
+        Task { @MainActor in
             do {
                 let value = try await closure()
-                await MainActor.run {
-                    self.state = .loaded(value)
-                }
+                self.state = .loaded(value)
             } catch {
-                await MainActor.run {
-                    self.state = .errored(error)
-                }
+                self.state = .errored(error)
             }
         }
     }
