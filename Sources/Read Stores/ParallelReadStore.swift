@@ -38,7 +38,9 @@ public class ParallelReadStore<A: ReadStorable, B: ReadStorable, Output>: ReadSt
     
     public var state: StoreState<Output> {
         willSet {
-            self.objectWillChange.send()
+            Task { @MainActor in
+                self.objectWillChange.send()
+            }
         }
         didSet {
             self._objectDidChange.send(state)
