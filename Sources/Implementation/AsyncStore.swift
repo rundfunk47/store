@@ -6,8 +6,8 @@ public class AsyncStore<T>: ReadStorable {
     
     public var state: StoreState<T> {
         willSet {
-            Task { @MainActor in
-                self.objectWillChange.send()
+            Task { @MainActor [weak self] in
+                self?.objectWillChange.send()
             }
         } didSet {
             self._objectDidChange.send(state)
