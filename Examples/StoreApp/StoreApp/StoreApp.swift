@@ -22,11 +22,12 @@ struct StoreApp: App {
 
 class Stores {
     var nameStore: ReadStore<String>
-    var titleStore: ReadStore<String>
+    //var titleStore: ReadStore<String>
 
     init() {
-        self.nameStore = CrazyStore().eraseToAnyReadStore()
-        self.titleStore = CrazyStore().eraseToAnyReadStore()
+        self.nameStore = ParallelReadStore(CrazyStore(), CrazyStore(), { a, b in
+            return a + b
+        }).eraseToAnyReadStore()
     }
 }
 

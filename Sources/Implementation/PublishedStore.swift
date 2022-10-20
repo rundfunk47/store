@@ -19,7 +19,7 @@ public class PublishedStore<T>: Storable {
     public func fetch() {
         guard cancellable == nil else { return }
 
-        cancellable = signal.sink { [weak self] newValue in
+        cancellable = signal.receive(on: DispatchQueue.main).sink { [weak self] newValue in
             self?.state = .loaded(newValue)
         }
     }
@@ -30,7 +30,7 @@ public class PublishedStore<T>: Storable {
     
     private var _objectDidChange: PassthroughSubject<StoreState<T>, Never> = PassthroughSubject()
         
-    private var cancellable: AnyCancellable!
+    private var cancellable: AnyCancellable?
     private let signal: AnyPublisher<T, Never>
     
     public init(_  input: AnyPublisher<T, Never>) {
