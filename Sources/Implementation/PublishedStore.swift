@@ -4,7 +4,9 @@ import Combine
 public class PublishedStore<T>: Storable {
     public var state: StoreState<T> {
         willSet {
-            self.objectWillChange.send()
+            Task { @MainActor in
+                self.objectWillChange.send()
+            }
         } didSet {
             self._objectDidChange.send(state)
         }
@@ -17,8 +19,8 @@ public class PublishedStore<T>: Storable {
     public func fetch() {
         guard cancellable == nil else { return }
 
-        cancellable = signal.sink { newValue in
-            self.state = .loaded(newValue)
+        cancellable = signal.sink { [weak self] newValue in
+            self?.state = .loaded(newValue)
         }
     }
     
