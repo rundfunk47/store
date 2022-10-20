@@ -25,12 +25,13 @@ public class AsyncStore<T>: ReadStorable {
         // if initial or error:
         self.state = .loading
         
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
             do {
+                guard let closure = self?.closure else { return }
                 let value = try await closure()
-                self.state = .loaded(value)
+                self?.state = .loaded(value)
             } catch {
-                self.state = .errored(error)
+                self?.state = .errored(error)
             }
         }
     }
