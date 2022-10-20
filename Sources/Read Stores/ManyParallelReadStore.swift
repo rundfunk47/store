@@ -5,6 +5,8 @@ class ManyParallelReadStore<T, Base: ReadStorable>: ReadStorable {
     private static func calculateState(base: [StoreState<Base.T>], transform: @escaping ([Base.T]) throws -> T) -> StoreState<T> {
         var all: [Base.T] = []
         
+        var refreshing: Bool = false
+        
         for state in base {
             switch state {
             case .initial:
@@ -13,13 +15,20 @@ class ManyParallelReadStore<T, Base: ReadStorable>: ReadStorable {
                 return .loading
             case .loaded(let value):
                 all.append(value)
+            case .refreshing(let value):
+                refreshing = true
+                all.append(value)
             case .errored(let error):
                 return .errored(error)
             }
         }
 
         do {
-            return .loaded(try transform(all))
+            if refreshing {
+                return .refreshing(try transform(all))
+            } else {
+                return .loaded(try transform(all))
+            }
         } catch {
             return .errored(error)
         }

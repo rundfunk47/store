@@ -12,15 +12,19 @@ public class ParallelReadStore<A: ReadStorable, B: ReadStorable, Output>: ReadSt
             return .initial
         case .loading:
             return .loading
-        case .loaded(let aValue):
+        case .loaded(let aValue), .refreshing(let aValue):
             switch bState {
             case .initial:
                 return .initial
             case .loading:
                 return .loading
-            case .loaded(let bValue):
+            case .loaded(let bValue), .refreshing(let bValue):
                 do {
-                    return .loaded(try transform(aValue, bValue))
+                    if aState.isRefreshing || bState.isRefreshing {
+                        return .refreshing(try transform(aValue, bValue))
+                    } else {
+                        return .loaded(try transform(aValue, bValue))
+                    }
                 } catch {
                     return .errored(error)
                 }

@@ -4,7 +4,7 @@ import Combine
 public class KeyPathMappedStore<T, Base: Storable>: Storable {
     public func set(_ value: T) {
         switch base.state {
-        case .errored, .initial, .loading:
+        case .errored, .initial, .loading, .refreshing:
             fatalError()
         case .loaded(let baseValue):
             var newBaseValue = baseValue
@@ -47,6 +47,9 @@ public class KeyPathMappedStore<T, Base: Storable>: Storable {
             return .initial
         case .loading:
             return  .loading
+        case .refreshing(let value):
+            let val = value[keyPath: keyPath]
+            return .refreshing(val)
         case .loaded(let value):
             let val = value[keyPath: keyPath]
             return .loaded(val)

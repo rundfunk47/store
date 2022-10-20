@@ -6,7 +6,7 @@ public extension ReadStorable {
         fetchIfNeeded()
         
         switch self.state {
-        case .loaded(let value):
+        case .loaded(let value), .refreshing(let value):
             return Result.Publisher(.success(value)).eraseToAnyPublisher()
         default:
             break

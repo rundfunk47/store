@@ -5,10 +5,20 @@ public enum StoreState<T> {
     case initial
     case loading
     case loaded(_ value: T)
+    case refreshing(_ value: T)
+    
+    var isRefreshing: Bool {
+        switch self {
+        case .refreshing:
+            return true
+        default:
+            return false
+        }
+    }
     
     public var loadedValue: T? {
         switch self {
-        case .loaded(let value):
+        case .loaded(let value), .refreshing(let value):
             return value
         default:
             return nil
@@ -24,6 +34,8 @@ extension StoreState: Equatable where T: Equatable {
         case (.loading, .loading):
             return true
         case (.loaded(let lhsValue), .loaded(let rhsValue)):
+            return lhsValue == rhsValue
+        case (.refreshing(let lhsValue), .refreshing(let rhsValue)):
             return lhsValue == rhsValue
         case (.errored(let lhsError), .errored(let rhsError)):
             return lhsError.localizedDescription == rhsError.localizedDescription
@@ -44,6 +56,8 @@ public extension StoreState {
             return .errored(error)
         case .loaded(let value):
             return .loaded(value[keyPath: keyPath])
+        case .refreshing(let value):
+            return .refreshing(value[keyPath: keyPath])
         }
     }
 }

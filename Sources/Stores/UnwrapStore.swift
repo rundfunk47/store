@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-class UnwrapStore<Base: Storable>: Storable where Base.T: OptionalProtocol {
+class UnwrapStore<Base: Storable>: Storable where Base.T: Wrapping {
     func set(_ value: Base.T.Wrapped) {
         base.set(value as! Base.T)
     }
@@ -15,6 +15,12 @@ class UnwrapStore<Base: Storable>: Storable where Base.T: OptionalProtocol {
                 return .loading
             case .initial:
                 return .initial
+            case .refreshing(let wrapped):
+                do {
+                    return .refreshing(try wrapped.unwrapWithError())
+                } catch {
+                    return .errored(error)
+                }
             case .loaded(let wrapped):
                 do {
                     return .loaded(try wrapped.unwrapWithError())
@@ -31,6 +37,8 @@ class UnwrapStore<Base: Storable>: Storable where Base.T: OptionalProtocol {
             case .initial:
                 self.base.state = .initial
             case .loaded(let value):
+                self.base.state = .loaded(value as! Base.T)
+            case .refreshing(let value):
                 self.base.state = .loaded(value as! Base.T)
             }
         }
@@ -49,6 +57,12 @@ class UnwrapStore<Base: Storable>: Storable where Base.T: OptionalProtocol {
                 return .loading
             case .initial:
                 return .initial
+            case .refreshing(let wrapped):
+                do {
+                    return .refreshing(try wrapped.unwrapWithError())
+                } catch {
+                    return .errored(error)
+                }
             case .loaded(let wrapped):
                 do {
                     return .loaded(try wrapped.unwrapWithError())
@@ -70,7 +84,7 @@ class UnwrapStore<Base: Storable>: Storable where Base.T: OptionalProtocol {
     }
 }
 
-public extension Storable where Self.T: OptionalProtocol {
+public extension Storable where Self.T: Wrapping {
     func unwrap() -> Store<Self.T.Wrapped> {
         return UnwrapStore(self).eraseToAnyStore()
     }

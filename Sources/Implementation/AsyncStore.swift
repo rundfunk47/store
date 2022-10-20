@@ -14,14 +14,13 @@ public class AsyncStore<T>: ReadStorable {
     
     public func fetch() {
         switch self.state {
-        case .loading, .loaded:
+        case .loading, .loaded, .refreshing:
             return
         default:
             break
         }
         
         // if initial or error:
-        
         self.state = .loading
         
         Task {

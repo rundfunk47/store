@@ -4,10 +4,13 @@ public enum PresentationState {
     case errored(Error)
     case loading
     case loaded
+    case refreshing
 }
 
 extension Collection where Element == PresentationState {
     public var presentationState: PresentationState {
+        var refreshing: Bool = false
+        
         for element in self {
             switch element {
             case .loading:
@@ -15,10 +18,16 @@ extension Collection where Element == PresentationState {
             case .errored(let error):
                 return .errored(error)
             case .loaded:
-                break
+                continue
+            case .refreshing:
+                refreshing = true
             }
         }
         
-        return .loaded
+        if refreshing {
+            return .refreshing
+        } else {
+            return .loaded
+        }
     }
 }

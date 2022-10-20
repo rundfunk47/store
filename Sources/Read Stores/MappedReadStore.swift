@@ -45,6 +45,12 @@ class MappedReadStore<T, Base: ReadStorable>: ReadStorable {
             } catch {
                 return .errored(error)
             }
+        case .refreshing(let value):
+            do {
+                return .refreshing(try transform(value))
+            } catch {
+                return .errored(error)
+            }
         case .errored(let error):
             return .errored(error)
         }

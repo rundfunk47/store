@@ -11,12 +11,12 @@ enum UnwrapError: LocalizedError {
     }
 }
 
-public protocol OptionalProtocol {
+public protocol Wrapping {
     associatedtype Wrapped
     func unwrapWithError() throws -> Wrapped
 }
 
-extension Optional: OptionalProtocol {
+extension Optional: Wrapping {
     public func unwrapWithError() throws -> Wrapped {
         if let value = self {
             return value

@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-public protocol ReadStorable: ObservableObject /*PresentationStateProviding, Fetchable*/ {
+public protocol ReadStorable: ObservableObject {
     associatedtype T
     
     var state: StoreState<T> { get }

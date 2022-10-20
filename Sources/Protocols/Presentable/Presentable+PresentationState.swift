@@ -41,6 +41,16 @@ private extension ReadStorable {
             } else {
                 return .loaded
             }
+        case .refreshing(let thing):
+            if let thing = thing as? (any ObservableObject) {
+                return thing.presentationState
+            } else if let thing = thing as? (any Sequence) {
+                return thing.compactMap { element in
+                    (element as? (any ObservableObject))?.presentationState
+                }.presentationState
+            } else {
+                return .refreshing
+            }
         }
     }
 }

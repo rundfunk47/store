@@ -39,7 +39,7 @@ class ChainedReadStore<T, Base: ReadStorable>: ReadStorable {
             self.objectWillChange.send()
             self.state = .initial
             self._objectDidChange.send(.initial)
-        case .loaded(let value):
+        case .loaded(let value), .refreshing(let value):
             let newStore = self.transform(value)
             
             innerWillChangeCancellable = newStore.objectWillChange.sink(receiveValue: { [weak self] _ in
@@ -71,7 +71,7 @@ class ChainedReadStore<T, Base: ReadStorable>: ReadStorable {
             self.state = .errored(error)
         case .initial:
             self.state = .initial
-        case .loaded(let value):
+        case .loaded(let value), .refreshing(let value):
             let newStore = self.transform(value)
             self.state = newStore.state
 

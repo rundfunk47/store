@@ -10,7 +10,7 @@ extension ReadStorable {
             .setFailureType(to: Error.self)
             .flatMap({ state -> AnyPublisher<T, Error> in
                 switch state {
-                case .loaded(let value):
+                case .loaded(let value), .refreshing(let value):
                     return Result.Publisher(.success(value)).eraseToAnyPublisher()
                 case .errored(let error):
                     return Result.Publisher(.failure(error)).eraseToAnyPublisher()
