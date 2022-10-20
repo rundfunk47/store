@@ -127,12 +127,8 @@ fileprivate final class _AnyStoreBox<Base: Storable>: _AnyStoreBase<Base.T> {
             self.cancellable[key] = self.objectWillChange.sink { [weak instance] in
 
                 if let instance = instance {
-                    if Thread.isMainThread {
+                    Task { @MainActor in
                         (instance.objectWillChange as! ObservableObjectPublisher).send()
-                    } else {
-                        DispatchQueue.main.sync {
-                            (instance.objectWillChange as! ObservableObjectPublisher).send()
-                        }
                     }
                 } else {
                     self.cancellable[key] = nil
@@ -159,7 +155,8 @@ fileprivate final class _AnyStoreBox<Base: Storable>: _AnyStoreBase<Base.T> {
         }
         set {
             let store = instance[keyPath: storageKeyPath]
-            DispatchQueue.main.async {
+            
+            Task { @MainActor in
                 store.loadedValue = newValue
             }
         }
@@ -180,7 +177,7 @@ fileprivate final class _AnyStoreBox<Base: Storable>: _AnyStoreBase<Base.T> {
             } set: { newValue in
                 let store = instance[keyPath: storageKeyPath]
                 
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     store.loadedValue = newValue
                 }
             }

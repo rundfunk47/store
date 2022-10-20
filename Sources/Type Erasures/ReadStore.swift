@@ -101,12 +101,8 @@ fileprivate final class _AnyReadStoreBox<Base: ReadStorable>: _AnyReadStoreBase<
             self.cancellable[key] = self.objectWillChange.sink { [weak instance] in
 
                 if let instance = instance {
-                    if Thread.isMainThread {
+                    Task { @MainActor in
                         (instance.objectWillChange as! ObservableObjectPublisher).send()
-                    } else {
-                        DispatchQueue.main.sync {
-                            (instance.objectWillChange as! ObservableObjectPublisher).send()
-                        }
                     }
                 } else {
                     self.cancellable[key] = nil

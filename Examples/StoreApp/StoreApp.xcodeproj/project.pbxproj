@@ -17,6 +17,7 @@
 /* Begin PBXFileReference section */
 		EB9E47AD28DDD92F00980804 /* ContentsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentsView.swift; sourceTree = "<group>"; };
 		EBCD25E328DDA92D0085A068 /* Store */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Store; path = ../..; sourceTree = "<group>"; };
+		EBD0851F2901BA6F001050B6 /* Store */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Store; path = ../..; sourceTree = "<group>"; };
 		EBDEF99728CA847400C85B9E /* StoreApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StoreApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EBDEF99A28CA847400C85B9E /* StoreApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreApp.swift; sourceTree = "<group>"; };
 		EBDEF99E28CA847500C85B9E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -78,6 +79,7 @@
 			isa = PBXGroup;
 			children = (
 				EBCD25E328DDA92D0085A068 /* Store */,
+				EBD0851F2901BA6F001050B6 /* Store */,
 			);
 			name = Packages;
 			sourceTree = "<group>";

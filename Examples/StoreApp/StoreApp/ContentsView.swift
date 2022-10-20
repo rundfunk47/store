@@ -9,24 +9,12 @@ import SwiftUI
 import Store
 
 class ContentsViewModel: ObservableObject {
-    @ReadStore var contents: [ContentViewModel]
-    
-    init(stores: Stores) {
-        self._contents = stores.namesStore.map({ ids in
-            ids.map { id in
-                ContentViewModel(id: id, stores: stores)
-            }
-        })
-    }
-}
-
-class ContentViewModel: ObservableObject {
-    let id: Int
     @ReadStore var name: String
-    
-    init(id: Int, stores: Stores) {
-        self.id = id
-        self._name = stores.name(id: id)
+    @ReadStore var title: String
+
+    init(stores: Stores) {
+        self._name = stores.nameStore
+        self._title = stores.titleStore
     }
 }
 
@@ -37,11 +25,10 @@ struct ContentsView<ViewModel: ContentsViewModel>: View {
         NavigationView {
             Group {
                 switch viewModel.presentationState {
-                case .loaded:
+                case .loaded, .refreshing:
                     List {
-                        ForEach(viewModel.contents, id: \.id) {
-                            Text($0.name)
-                        }
+                        Text(viewModel.title)
+                        Text(viewModel.name)
                     }
                 case .loading:
                     ProgressView()
