@@ -22,52 +22,8 @@ struct StoreApp: App {
 
 class Stores {
     var nameStore: ReadStore<String>
-    //var titleStore: ReadStore<String>
 
     init() {
-        self.nameStore = ParallelReadStore(CrazyStore(), CrazyStore(), { a, b in
-            return a + b
-        }).eraseToAnyReadStore()
-    }
-}
-
-class CrazyStore: ReadStorable {
-    var state: StoreState<String>
-    
-    var objectDidChange: AnyPublisher<StoreState<String>, Never> {
-        _objectDidChange.eraseToAnyPublisher()
-    }
-    
-    var _objectDidChange = PassthroughSubject<StoreState<String>, Never>()
-
-    func fetch() {
-        //self.state = .loaded("Hi!")
-    }
-    
-    var timer: Timer!
-
-    deinit {
-        timer.invalidate()
-    }
-    
-    init() {
-        self.state = .initial
-        
-        self.timer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 0.5...1.5), repeats: true, block: { [weak self] _ in
-            guard let self = self else { return }
-            
-            switch self.state {
-            case .loaded:
-                self.objectWillChange.send()
-                self.state = .initial
-                self._objectDidChange.send(self.state)
-            case .initial:
-                self.objectWillChange.send()
-                self.state = .loaded("Hi!")
-                self._objectDidChange.send(self.state)
-            default:
-                break
-            }
-        })
+        nameStore = MockStore(.loaded("Hello world!")).eraseToAnyReadStore()
     }
 }

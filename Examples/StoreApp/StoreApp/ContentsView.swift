@@ -10,11 +10,9 @@ import Store
 
 class ContentsViewModel: ObservableObject {
     @ReadStore var name: String
-    //@ReadStore var title: String
 
     init(stores: Stores) {
         self._name = stores.nameStore
-        //self._title = stores.titleStore
     }
 }
 
@@ -28,7 +26,6 @@ struct ContentsView<ViewModel: ContentsViewModel>: View {
                 case .loaded, .refreshing:
                     List {
                         Text(viewModel.name)
-                        //Text(viewModel.title)
                     }
                 case .loading:
                     ProgressView()

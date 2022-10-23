@@ -5,21 +5,12 @@ public extension ObservableObject {
         if let store = self as? (any ReadStorable) {
             return store.readStorablePresentationState
         } else {
-            let allChildren = Mirror(reflecting: self).children
+            let stores = Mirror(reflecting: self)
+                .children
+                .compactMap { $0.value as? (any ReadStorable) }
+                .map { $0.readStorablePresentationState }
 
-            let states = allChildren.compactMap { wrapper -> PresentationState? in
-                if let thing = wrapper.value as? (any ObservableObject) {
-                    return thing.presentationState
-                } else if let thing = wrapper.value as? (any Sequence) {
-                    return thing.compactMap { element in
-                        (element as? (any ObservableObject))?.presentationState
-                    }.presentationState
-                } else {
-                    return nil
-                }
-            }
-            
-            return states.presentationState
+            return stores.presentationState
         }
     }
 }
@@ -31,26 +22,10 @@ private extension ReadStorable {
             return .loading
         case .errored(let error):
             return .errored(error)
-        case .loaded(let thing):
-            if let thing = thing as? (any ObservableObject) {
-                return thing.presentationState
-            } else if let thing = thing as? (any Sequence) {
-                return thing.compactMap { element in
-                    (element as? (any ObservableObject))?.presentationState
-                }.presentationState
-            } else {
-                return .loaded
-            }
-        case .refreshing(let thing):
-            if let thing = thing as? (any ObservableObject) {
-                return thing.presentationState
-            } else if let thing = thing as? (any Sequence) {
-                return thing.compactMap { element in
-                    (element as? (any ObservableObject))?.presentationState
-                }.presentationState
-            } else {
-                return .refreshing
-            }
+        case .loaded:
+            return .loaded
+        case .refreshing:
+            return .refreshing
         }
     }
 }
