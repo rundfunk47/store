@@ -2,7 +2,7 @@ import Foundation
 
 extension ObservableObject {
     public func load() {
-        
+        self.load(force: false)
     }
     
     private func load(force: Bool) {
@@ -11,12 +11,16 @@ extension ObservableObject {
         allChildren.forEach { wrapper in
             if let store = wrapper.value as? (any Subscribable) {
                 store.subscribe(from: self)
-                store.fetchIfNeeded()
+                if force {
+                    store.fetch()
+                } else {
+                    store.fetchIfNeeded()
+                }
             }
         }
     }
     
     public func reload() {
-        self.load()
+        self.load(force: true)
     }
 }
